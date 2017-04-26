@@ -135,6 +135,9 @@ L.Edit.Path = L.Edit.SimpleShape.extend({
 		return {
 			pre : function(latLng) {
 				if (L.Util.isArray(latLng)) {
+					if (latLng.length && L.Util.isArray(latLng[0])) {
+						latLng = latLng[0];
+					}
 					var result = [], i, length = latLng.length;
 					for (i = 0; i < length; i++) {
 						result.push(self._map.project(latLng[i]));

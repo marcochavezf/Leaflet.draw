@@ -1,7 +1,8 @@
 var deps = {
 	Core: {
 		src: [
-			'Leaflet.draw.js'
+			'Leaflet.draw.js',
+			'Leaflet.Draw.Event.js'
 		],
 		desc: 'The core of the plugin. Currently only includes the version.'
 	},
@@ -22,9 +23,10 @@ var deps = {
 
 	EditHandlers: {
 		src: [
+			'edit/handler/Edit.SimpleShape.js',
+			'edit/handler/Edit.Path.js',
 			'edit/handler/Edit.Marker.js',
 			'edit/handler/Edit.Poly.js',
-			'edit/handler/Edit.SimpleShape.js',
 			'edit/handler/Edit.Rectangle.js',
 			'edit/handler/Edit.Circle.js'
 		],
@@ -34,6 +36,10 @@ var deps = {
 
 	Extensions: {
 		src: [
+			'ext/AffineTransform.js',
+			'ext/LineMarker.js',
+			'ext/TouchEvents.js',
+			'ext/MarkerExt.js',
 			'ext/LatLngUtil.js',
 			'ext/GeometryUtil.js',
 			'ext/LineUtil.Intersect.js',

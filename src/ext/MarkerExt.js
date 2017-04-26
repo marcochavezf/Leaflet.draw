@@ -2,7 +2,7 @@
  * A marker that has a fixed pixel offset w.r.t. its marker position.
  *
  */
-L.MarkerExt = L.Marker.extend({
+L.MarkerExt = L.Marker.Touch.extend({
 
     options: {
         dx: 0,
