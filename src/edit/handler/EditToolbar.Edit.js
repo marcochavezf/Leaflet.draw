@@ -161,7 +161,9 @@ L.EditToolbar.Edit = L.Handler.extend({
 	},
 
 	_updateTooltip: function () {
-		this._tooltip.updateContent(this._getTooltipText());
+		if (!this._tooltip._cloneMode) {
+			this._tooltip.updateContent(this._getTooltipText());
+		}
 	},
 
 	_revertLayer: function (layer) {

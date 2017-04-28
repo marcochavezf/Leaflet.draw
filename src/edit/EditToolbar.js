@@ -50,6 +50,10 @@ L.EditToolbar = L.Toolbar.extend({
 		L.Toolbar.prototype.initialize.call(this, options);
 
 		this._selectedFeatureCount = 0;
+		this._cloneMode = false;
+		if (this._map) {
+			this._map._editTooltip._cloneMode = false;
+		}
 	},
 
 	// @method getModeHandlers(): object
@@ -79,7 +83,13 @@ L.EditToolbar = L.Toolbar.extend({
 	// @method getActions(): object
 	// Get actions information
 	getActions: function () {
-		return [
+		var cloneAction = {
+			title: 'Clone',
+			text: 'Clone',
+			callback: this._clone,
+			context: this
+		};
+		var actions = [
 			{
 				title: L.drawLocal.edit.toolbar.actions.save.title,
 				text: L.drawLocal.edit.toolbar.actions.save.text,
@@ -99,6 +109,11 @@ L.EditToolbar = L.Toolbar.extend({
 				context: this
 			}
 		];
+
+		if (this._activeMode.handler.type === 'edit') {
+			actions.splice(1, 0, cloneAction);
+		}
+		return actions;
 	},
 
 	// @method addToolbar(map): L.DomUtil
@@ -128,15 +143,39 @@ L.EditToolbar = L.Toolbar.extend({
 			return;
 		}
 
-		this._activeMode.handler.revertLayers();
+		if (this._cloneMode) {
+			this._activeMode.handler.revertLayers();
+		}
 
 		L.Toolbar.prototype.disable.call(this);
+		this._cloneMode = false;
+		if (this._map._editTooltip) {
+			this._map._editTooltip._cloneMode = false;
+		}
 	},
 
 	_save: function () {
 		this._activeMode.handler.save();
 		if (this._activeMode) {
 			this._activeMode.handler.disable();
+		}
+		this._cloneMode = false;
+		this._map._editTooltip._cloneMode = false;
+	},
+
+	_clone: function () {
+		this._cloneMode = !this._cloneMode;
+		this._map._editTooltip._cloneMode = this._cloneMode;
+		if (this._cloneMode) {
+			this._map._editTooltip.updateContent({
+				text: 'Drag and drop to clone a shape',
+				subtext: ''
+			});
+		} else {
+			this._map._editTooltip.updateContent({
+				text: L.drawLocal.edit.handlers.edit.tooltip.text,
+				subtext: L.drawLocal.edit.handlers.edit.tooltip.subtext
+			});
 		}
 	},
 
