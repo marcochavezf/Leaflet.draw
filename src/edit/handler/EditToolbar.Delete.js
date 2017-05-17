@@ -136,7 +136,11 @@ L.EditToolbar.Delete = L.Handler.extend({
 
 	_removeLayer: function (e) {
 		var layer = e.layer || e.target || e;
+		if (!layer.enableEditMode) {
+			return;
+		}
 
+		layer.deletedFromToolBar = true;
 		this._deletableLayers.removeLayer(layer);
 
 		this._deletedLayers.addLayer(layer);

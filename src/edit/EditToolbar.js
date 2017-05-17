@@ -102,12 +102,14 @@ L.EditToolbar = L.Toolbar.extend({
 				callback: this.disable,
 				context: this
 			},
+			/*
 			{
 				title: L.drawLocal.edit.toolbar.actions.clearAll.title,
 				text: L.drawLocal.edit.toolbar.actions.clearAll.text,
 				callback: this._clearAllLayers,
 				context: this
 			}
+			*/
 		];
 
 		if (this._activeMode.handler.type === 'edit') {
@@ -143,9 +145,9 @@ L.EditToolbar = L.Toolbar.extend({
 			return;
 		}
 
-		if (this._cloneMode) {
+		//if (this._cloneMode) {
 			this._activeMode.handler.revertLayers();
-		}
+		//}
 
 		L.Toolbar.prototype.disable.call(this);
 		this._cloneMode = false;
@@ -160,7 +162,9 @@ L.EditToolbar = L.Toolbar.extend({
 			this._activeMode.handler.disable();
 		}
 		this._cloneMode = false;
-		this._map._editTooltip._cloneMode = false;
+		if (this._map._editTooltip) {
+			this._map._editTooltip._cloneMode = false;
+		}
 	},
 
 	_clone: function () {
@@ -180,7 +184,9 @@ L.EditToolbar = L.Toolbar.extend({
 	},
 
 	_clearAllLayers:function(){
-		this._activeMode.handler.removeAllLayers();
+		if (this._activeMode.handler.removeAllLayers) {
+			this._activeMode.handler.removeAllLayers();
+		}
 		if (this._activeMode) {
 			this._activeMode.handler.disable();
 		}

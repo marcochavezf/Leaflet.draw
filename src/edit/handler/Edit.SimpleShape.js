@@ -152,6 +152,9 @@ L.Edit.SimpleShape = L.Handler.extend({
 	},
 
 	_unbindMarker: function (marker) {
+		if(marker === undefined) {
+			return;
+		}
 		marker
 			.off('dragstart', this._onMarkerDragStart, this)
 			.off('drag', this._onMarkerDrag, this)

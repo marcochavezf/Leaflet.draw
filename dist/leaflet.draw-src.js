@@ -1,5 +1,5 @@
 /*
- Leaflet.draw 0.4.9+2c2d02f, a plugin that adds drawing and editing tools to Leaflet powered maps.
+ Leaflet.draw 0.4.9+530fec4, a plugin that adds drawing and editing tools to Leaflet powered maps.
  (c) 2012-2017, Jacob Toye, Jon West, Smartrak, Leaflet
 
  https://github.com/Leaflet/Leaflet.draw
@@ -8,7 +8,7 @@
 (function (window, document, undefined) {/**
  * Leaflet.draw assumes that you have already included the Leaflet library.
  */
-L.drawVersion = "0.4.9+2c2d02f";
+L.drawVersion = "0.4.9+530fec4";
 /**
  * @class L.Draw
  * @aka Draw
@@ -161,10 +161,12 @@ L.drawLocal = {
 					title: 'Cancel editing, discards all changes.',
 					text: 'Cancel'
 				},
+				/*
 				clearAll:{
 					title: 'clear all layers.',
 					text: 'Clear All'
 				}
+				*/
 			},
 			buttons: {
 				edit: 'Edit layers.',
@@ -1682,6 +1684,9 @@ L.Edit.SimpleShape = L.Handler.extend({
 	},
 
 	_unbindMarker: function (marker) {
+		if(marker === undefined) {
+			return;
+		}
 		marker
 			.off('dragstart', this._onMarkerDragStart, this)
 			.off('drag', this._onMarkerDrag, this)
@@ -1698,6 +1703,9 @@ L.Edit.SimpleShape = L.Handler.extend({
 		marker.setOpacity(0);
 
 		this._shape.fire('editstart');
+		if (marker === this._moveMarker) {
+			this._shape.fire('dragstart');
+		}
 	},
 
 	_fireEdit: function () {
@@ -2329,7 +2337,7 @@ L.Edit.Poly = L.Edit.Path.extend({
 		}
 	},
 
-	//TODO: Remove this piece of code
+	//TODO: Hook up L.Edit.PolyVerticesEdit
 	/*
 	// @method addHooks(): void
 	// Add listener hooks to this handler
@@ -2358,7 +2366,6 @@ L.Edit.Poly = L.Edit.Path.extend({
 		});
 		L.Edit.SimpleShape.prototype.updateMarkers.call(this);
 	},
-	*/
 
 	_initHandlers: function () {
 		this._verticesHandlers = [];
@@ -2366,6 +2373,7 @@ L.Edit.Poly = L.Edit.Path.extend({
 			this._verticesHandlers.push(new L.Edit.PolyVerticesEdit(this._shape, this.latlngs[i], this.options));
 		}
 	},
+	*/
 
 	_updateLatLngs: function (e) {
 		this.latlngs = [e.layer._latlngs];
@@ -2376,6 +2384,7 @@ L.Edit.Poly = L.Edit.Path.extend({
 
 });
 
+//TODO: update L.Edit.PolyVerticesEdit methods from L.Edit.Poly
 /**
  * @class L.Edit.PolyVerticesEdit
  * @aka Edit.PolyVerticesEdit
@@ -4483,6 +4492,10 @@ L.EditToolbar = L.Toolbar.extend({
 		L.Toolbar.prototype.initialize.call(this, options);
 
 		this._selectedFeatureCount = 0;
+		this._cloneMode = false;
+		if (this._map) {
+			this._map._editTooltip._cloneMode = false;
+		}
 	},
 
 	// @method getModeHandlers(): object
@@ -4512,7 +4525,13 @@ L.EditToolbar = L.Toolbar.extend({
 	// @method getActions(): object
 	// Get actions information
 	getActions: function () {
-		return [
+		var cloneAction = {
+			title: 'Clone',
+			text: 'Clone',
+			callback: this._clone,
+			context: this
+		};
+		var actions = [
 			{
 				title: L.drawLocal.edit.toolbar.actions.save.title,
 				text: L.drawLocal.edit.toolbar.actions.save.text,
@@ -4525,13 +4544,20 @@ L.EditToolbar = L.Toolbar.extend({
 				callback: this.disable,
 				context: this
 			},
+			/*
 			{
 				title: L.drawLocal.edit.toolbar.actions.clearAll.title,
 				text: L.drawLocal.edit.toolbar.actions.clearAll.text,
 				callback: this._clearAllLayers,
 				context: this
 			}
+			*/
 		];
+
+		if (this._activeMode.handler.type === 'edit') {
+			actions.splice(1, 0, cloneAction);
+		}
+		return actions;
 	},
 
 	// @method addToolbar(map): L.DomUtil
@@ -4561,9 +4587,15 @@ L.EditToolbar = L.Toolbar.extend({
 			return;
 		}
 
-		this._activeMode.handler.revertLayers();
+		//if (this._cloneMode) {
+			this._activeMode.handler.revertLayers();
+		//}
 
 		L.Toolbar.prototype.disable.call(this);
+		this._cloneMode = false;
+		if (this._map._editTooltip) {
+			this._map._editTooltip._cloneMode = false;
+		}
 	},
 
 	_save: function () {
@@ -4571,10 +4603,32 @@ L.EditToolbar = L.Toolbar.extend({
 		if (this._activeMode) {
 			this._activeMode.handler.disable();
 		}
+		this._cloneMode = false;
+		if (this._map._editTooltip) {
+			this._map._editTooltip._cloneMode = false;
+		}
+	},
+
+	_clone: function () {
+		this._cloneMode = !this._cloneMode;
+		this._map._editTooltip._cloneMode = this._cloneMode;
+		if (this._cloneMode) {
+			this._map._editTooltip.updateContent({
+				text: 'Drag and drop to clone a shape',
+				subtext: ''
+			});
+		} else {
+			this._map._editTooltip.updateContent({
+				text: L.drawLocal.edit.handlers.edit.tooltip.text,
+				subtext: L.drawLocal.edit.handlers.edit.tooltip.subtext
+			});
+		}
 	},
 
 	_clearAllLayers:function(){
-		this._activeMode.handler.removeAllLayers();
+		if (this._activeMode.handler.removeAllLayers) {
+			this._activeMode.handler.removeAllLayers();
+		}
 		if (this._activeMode) {
 			this._activeMode.handler.disable();
 		}
@@ -4786,7 +4840,9 @@ L.EditToolbar.Edit = L.Handler.extend({
 	},
 
 	_updateTooltip: function () {
-		this._tooltip.updateContent(this._getTooltipText());
+		if (!this._tooltip._cloneMode) {
+			this._tooltip.updateContent(this._getTooltipText());
+		}
 	},
 
 	_revertLayer: function (layer) {
@@ -5052,7 +5108,11 @@ L.EditToolbar.Delete = L.Handler.extend({
 
 	_removeLayer: function (e) {
 		var layer = e.layer || e.target || e;
+		if (!layer.enableEditMode) {
+			return;
+		}
 
+		layer.deletedFromToolBar = true;
 		this._deletableLayers.removeLayer(layer);
 
 		this._deletedLayers.addLayer(layer);
